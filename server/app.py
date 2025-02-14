@@ -95,10 +95,10 @@ async def get_data():
     rhum_values = []
 
     for interval, values in time_intervals.items():
-        avg_pm02 = np.mean(values["pm02"])
-        avg_rco2 = np.mean(values["rco2"])
-        avg_atmp = np.mean(values["atmp"])
-        avg_rhum = np.mean(values["rhum"])
+        avg_pm02 = sum(v['pm02'] for v in values) / len(values)
+        avg_rco2 = sum(v['rco2'] for v in values) / len(values)
+        avg_atmp = sum(v['atmp'] for v in values) / len(values)
+        avg_rhum = sum(v['rhum'] for v in values) / len(values)
 
         timestamps.append(interval.strftime('%A %H:%M'))
         pm02_values.append(avg_pm02)
