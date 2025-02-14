@@ -1,12 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 import sqlite3
-import numpy as np
 
 # FastAPI app initialization
 app = FastAPI()
+
+# Jinja2 Template setup
+templates = Jinja2Templates(directory="templates")
 
 # SQLite Database path
 DB_PATH = "logs.db"
@@ -18,7 +21,6 @@ def init_db():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        wifi INTEGER,
         pm02 INTEGER,
         rco2 INTEGER,
         atmp INTEGER,
@@ -47,16 +49,16 @@ async def log_number(log: Log):
     # Get the current timestamp
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    # Insert the new log into the database
-    cursor.execute("INSERT INTO logs (wifi, pm02, rco2, atmp, rhum, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-                   (log.wifi, log.pm02, log.rco2, log.atmp, log.rhum, timestamp))
+    # Insert the new log into the database for each metric
+    cursor.execute("INSERT INTO logs (pm02, rco2, atmp, rhum, timestamp) VALUES (?, ?, ?, ?, ?)", 
+                   (log.pm02, log.rco2, log.atmp, log.rhum, timestamp))
     conn.commit()
 
     conn.close()
 
-    return {"message": "Value logged successfully!"}
+    return {"message": "Values logged successfully!"}
 
-# GET endpoint to fetch data from the last 24 hours, averaged by 5-minute window
+# GET endpoint to fetch data from the last 24 hours
 @app.get("/data")
 async def get_data():
     conn = sqlite3.connect(DB_PATH)
