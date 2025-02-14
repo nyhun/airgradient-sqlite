@@ -65,7 +65,7 @@
                 const atmpCtx = document.getElementById('atmpChart').getContext('2d');
                 const rhumCtx = document.getElementById('rhumChart').getContext('2d');
 
-                function createChart(ctx, data, label) {
+                function createChart(ctx, data, label, annotations) {
                     new Chart(ctx, {
                         type: 'line',
                         data: {
@@ -86,15 +86,137 @@
                                         minRotation: 45
                                     }
                                 }
+                            },
+                            plugins: {
+                                annotation: {
+                                    annotations: annotations
+                                }
                             }
                         }
                     });
                 }
 
-                createChart(pm02Ctx, data, 'PM02');
-                createChart(rco2Ctx, data, 'RCO2');
-                createChart(atmpCtx, data, 'ATMP');
-                createChart(rhumCtx, data, 'RHUM');
+                // Annotations for PM02
+                const pm02Annotations = [
+                    {
+                        type: 'box',
+                        yMin: 0,
+                        yMax: 25,
+                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                        borderColor: 'green',
+                        borderWidth: 1,
+                        label: {
+                            content: 'Good (0-25)',
+                            enabled: true,
+                            position: 'center'
+                        }
+                    },
+                    {
+                        type: 'box',
+                        yMin: 25,
+                        yMax: 50,
+                        backgroundColor: 'rgba(255, 255, 0, 0.2)',
+                        borderColor: 'yellow',
+                        borderWidth: 1,
+                        label: {
+                            content: 'Fair (25-50)',
+                            enabled: true,
+                            position: 'center'
+                        }
+                    },
+                    {
+                        type: 'box',
+                        yMin: 50,
+                        yMax: 100,
+                        backgroundColor: 'rgba(255, 165, 0, 0.2)',
+                        borderColor: 'orange',
+                        borderWidth: 1,
+                        label: {
+                            content: 'Poor (50-100)',
+                            enabled: true,
+                            position: 'center'
+                        }
+                    },
+                    {
+                        type: 'box',
+                        yMin: 100,
+                        yMax: Math.max(...data.pm02),
+                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                        borderColor: 'red',
+                        borderWidth: 1,
+                        label: {
+                            content: 'Bad (>100)',
+                            enabled: true,
+                            position: 'center'
+                        }
+                    }
+                ];
+
+                // Annotations for RCO2
+                const rco2Annotations = [
+                    {
+                        type: 'box',
+                        yMin: 200,
+                        yMax: 1000,
+                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                        borderColor: 'green',
+                        borderWidth: 1,
+                        label: {
+                            content: 'Good (200-1000)',
+                            enabled: true,
+                            position: 'center'
+                        }
+                    },
+                    {
+                        type: 'box',
+                        yMin: 1000,
+                        yMax: 2000,
+                        backgroundColor: 'rgba(255, 255, 0, 0.2)',
+                        borderColor: 'yellow',
+                        borderWidth: 1,
+                        label: {
+                            content: 'Suboptimal (1000-2000)',
+                            enabled: true,
+                            position: 'center'
+                        }
+                    },
+                    {
+                        type: 'box',
+                        yMin: 2000,
+                        yMax: Math.max(...data.rco2),
+                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                        borderColor: 'red',
+                        borderWidth: 1,
+                        label: {
+                            content: 'Bad (>2000)',
+                            enabled: true,
+                            position: 'center'
+                        }
+                    }
+                ];
+
+                // Annotations for RHUM
+                const rhumAnnotations = [
+                    {
+                        type: 'box',
+                        yMin: 30,
+                        yMax: 60,
+                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                        borderColor: 'green',
+                        borderWidth: 1,
+                        label: {
+                            content: 'Good (30-60)',
+                            enabled: true,
+                            position: 'center'
+                        }
+                    }
+                ];
+
+                // Create charts
+                createChart(pm02Ctx, data, 'PM02', pm02Annotations);
+                createChart(rco2Ctx, data, 'RCO2', rco2Annotations);
+                createChart(atmpCtx, data, 'ATMP', []); // No annotations for ATMP
+                createChart(rhumCtx, data, 'RHUM', rhumAnnotations);
             });
         </script>
     </body>
