@@ -78,7 +78,7 @@ async def get_data():
     # Prepare the data by rounding timestamps to the nearest 5-minute interval
     time_intervals = {}
     for row in rows:
-        timestamp = datetime.strptime(row[5], '%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.strptime(row[4], '%Y-%m-%d %H:%M:%S')
         interval = timestamp.replace(second=0, microsecond=0, minute=(timestamp.minute // 5) * 5)
         if interval not in time_intervals:
             time_intervals[interval] = {"pm02": [], "rco2": [], "atmp": [], "rhum": []}
