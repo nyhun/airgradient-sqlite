@@ -21,7 +21,10 @@ def init_db():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        value INTEGER,
+        pm02 INTEGER,
+        rco2 INTEGER,
+        atmp INTEGER,
+        rhum INTEGER,
         timestamp TEXT
     )''')
     conn.commit()
@@ -46,13 +49,14 @@ async def log_number(log: Log):
     # Get the current timestamp
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    # Insert the new log into the database
-    cursor.execute("INSERT INTO logs (value, timestamp) VALUES (?, ?)", (log.rco2, timestamp))
+    # Insert the new log into the database for each metric
+    cursor.execute("INSERT INTO logs (pm02, rco2, atmp, rhum, timestamp) VALUES (?, ?, ?, ?, ?)", 
+                   (log.pm02, log.rco2, log.atmp, log.rhum, timestamp))
     conn.commit()
 
     conn.close()
 
-    return {"message": "Value logged successfully!"}
+    return {"message": "Values logged successfully!"}
 
 # GET endpoint to fetch data from the last 24 hours
 @app.get("/data")
@@ -62,7 +66,8 @@ async def get_data():
 
     # Get the data from the last 24 hours
     last_24_hours = datetime.now() - timedelta(hours=24)
-    cursor.execute("SELECT value, timestamp FROM logs WHERE timestamp >= ?", (last_24_hours.strftime('%Y-%m-%d %H:%M:%S'),))
+    cursor.execute("SELECT pm02, rco2, atmp, rhum, timestamp FROM logs WHERE timestamp >= ?", 
+                   (last_24_hours.strftime('%Y-%m-%d %H:%M:%S'),))
     rows = cursor.fetchall()
 
     conn.close()
@@ -71,22 +76,23 @@ async def get_data():
         return {"message": "No data available for the last 24 hours"}
 
     # Prepare data for the chart
-    timestamps = [datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S') for row in rows]
-    pm02 = [row[0] for row in rows]
-    rco2 = [row[0] for row in rows]
-    atmp = [row[0] for row in rows]
-    rhum = [row[0] for row in rows]
+    timestamps = [datetime.strptime(row[4], '%Y-%m-%d %H:%M:%S') for row in rows]
+    pm02_values = [row[0] for row in rows]
+    rco2_values = [row[1] for row in rows]
+    atmp_values = [row[2] for row in rows]
+    rhum_values = [row[3] for row in rows]
 
     # Convert to a format that Chart.js can understand
     data = {
         "timestamps": [ts.strftime('%Y-%m-%d %H:%M:%S') for ts in timestamps],
-        "pm02": pm02,
-        "rco2": rco2,
-        "atmp": atmp,
-        "rhum": rhum
+        "pm02": pm02_values,
+        "rco2": rco2_values,
+        "atmp": atmp_values,
+        "rhum": rhum_values
     }
 
     return data
+
 
 # GET endpoint to render HTML page with Chart.js using Jinja2 templates
 @app.get("/", response_class=HTMLResponse)
