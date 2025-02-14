@@ -1,54 +1,122 @@
-<html>
+<html lang="en">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Logged Values Charts</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
         <style>
             body {
-                font-family: Arial, sans-serif;
-                text-align: center;
+                font-family: 'Inter', sans-serif;
+                background-color: #f4f7f6;
+                color: #333;
+                margin: 0;
+                padding: 0;
             }
+
+            h1 {
+                font-size: 2rem;
+                margin: 20px 0;
+                text-align: center;
+                color: #333;
+            }
+
             .chart-container {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
-                width: 100%;
+                gap: 30px;
                 max-width: 1200px;
-                margin: 0 auto;
+                margin: 40px auto;
+                padding: 20px;
             }
+
+            .chart-card {
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                padding: 20px;
+                text-align: center;
+            }
+
             canvas {
                 width: 100% !important;
                 height: 250px !important;
+                border-radius: 8px;
             }
-            h1 {
-                font-size: 24px;
-                margin-bottom: 20px;
-            }
+
             h2 {
-                font-size: 20px;
+                font-size: 1.25rem;
+                color: #333;
                 margin-bottom: 10px;
+            }
+
+            .chart-card h2 {
+                font-size: 1.1rem;
+                color: #444;
+                margin-bottom: 15px;
+            }
+
+            .chart-card .chart {
+                position: relative;
+            }
+
+            /* Mobile responsiveness */
+            @media (max-width: 768px) {
+                .chart-container {
+                    grid-template-columns: 1fr;
+                }
+
+                canvas {
+                    height: 200px !important;
+                }
+            }
+
+            /* Accent color */
+            .good {
+                background-color: rgba(0, 255, 0, 0.2);
+            }
+            .fair {
+                background-color: rgba(255, 255, 0, 0.2);
+            }
+            .poor {
+                background-color: rgba(255, 165, 0, 0.2);
+            }
+            .bad {
+                background-color: rgba(255, 0, 0, 0.2);
             }
         </style>
     </head>
+
     <body>
         <h1>Logged Values in Last 24 Hours</h1>
 
         <div class="chart-container">
-            <div>
+            <div class="chart-card">
                 <h2>PM02</h2>
-                <canvas id="pm02Chart"></canvas>
+                <div class="chart">
+                    <canvas id="pm02Chart"></canvas>
+                </div>
             </div>
-            <div>
+
+            <div class="chart-card">
                 <h2>RCO2</h2>
-                <canvas id="rco2Chart"></canvas>
+                <div class="chart">
+                    <canvas id="rco2Chart"></canvas>
+                </div>
             </div>
-            <div>
+
+            <div class="chart-card">
                 <h2>ATMP</h2>
-                <canvas id="atmpChart"></canvas>
+                <div class="chart">
+                    <canvas id="atmpChart"></canvas>
+                </div>
             </div>
-            <div>
+
+            <div class="chart-card">
                 <h2>RHUM</h2>
-                <canvas id="rhumChart"></canvas>
+                <div class="chart">
+                    <canvas id="rhumChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -56,15 +124,6 @@
             fetch('/data')
             .then(response => response.json())
             .then(data => {
-                function getLineColor(value) {
-                    return value > 100 ? 'rgb(255, 99, 132)' : 'rgb(75, 192, 192)';
-                }
-
-                const pm02Ctx = document.getElementById('pm02Chart').getContext('2d');
-                const rco2Ctx = document.getElementById('rco2Chart').getContext('2d');
-                const atmpCtx = document.getElementById('atmpChart').getContext('2d');
-                const rhumCtx = document.getElementById('rhumChart').getContext('2d');
-
                 function createChart(ctx, data, label, annotations) {
                     new Chart(ctx, {
                         type: 'line',
@@ -73,8 +132,10 @@
                             datasets: [{
                                 label: label,
                                 data: data[label.toLowerCase()],
-                                borderColor: 'rgb(75, 192, 192)',
+                                borderColor: '#4BC0C0',
                                 fill: false,
+                                borderWidth: 2,
+                                lineTension: 0.1
                             }]
                         },
                         options: {
@@ -83,9 +144,12 @@
                                 x: {
                                     ticks: {
                                         maxRotation: 90,
-                                        minRotation: 45
-                                    }
-                                }
+                                        minRotation: 45,
+                                    },
+                                },
+                                y: {
+                                    beginAtZero: false,
+                                },
                             },
                             plugins: {
                                 annotation: {
@@ -213,10 +277,10 @@
                 ];
 
                 // Create charts
-                createChart(pm02Ctx, data, 'PM02', pm02Annotations);
-                createChart(rco2Ctx, data, 'RCO2', rco2Annotations);
-                createChart(atmpCtx, data, 'ATMP', []); // No annotations for ATMP
-                createChart(rhumCtx, data, 'RHUM', rhumAnnotations);
+                createChart(document.getElementById('pm02Chart').getContext('2d'), data, 'PM02', pm02Annotations);
+                createChart(document.getElementById('rco2Chart').getContext('2d'), data, 'RCO2', rco2Annotations);
+                createChart(document.getElementById('atmpChart').getContext('2d'), data, 'ATMP', []);
+                createChart(document.getElementById('rhumChart').getContext('2d'), data, 'RHUM', rhumAnnotations);
             });
         </script>
     </body>
