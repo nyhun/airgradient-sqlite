@@ -40,3 +40,7 @@ For small-scale home deployments, using `uvicorn` to serve the application shoul
    Run the following command to install required dependencies:
    ```bash
    pip install -r requirements.txt
+3. **Start server**
+   Run the following command to start the server:
+   ```bash
+   uvicorn app:app
