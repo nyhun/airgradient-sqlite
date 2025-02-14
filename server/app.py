@@ -75,47 +75,49 @@ async def get_data():
     if not rows:
         return {"message": "No data available for the last 24 hours"}
 
-    # Prepare the data by rounding timestamps to the nearest 5-minute interval
-    time_intervals = {}
+    # Group data by 5-minute windows
+    data = defaultdict(list)
     for row in rows:
-        timestamp = datetime.strptime(row[4], '%Y-%m-%d %H:%M:%S')
-        interval = timestamp.replace(second=0, microsecond=0, minute=(timestamp.minute // 5) * 5)
-        if interval not in time_intervals:
-            time_intervals[interval] = {"pm02": [], "rco2": [], "atmp": [], "rhum": []}
-        time_intervals[interval]["pm02"].append(row[1])
-        time_intervals[interval]["rco2"].append(row[2])
-        time_intervals[interval]["atmp"].append(row[3])
-        time_intervals[interval]["rhum"].append(row[4])
+        # Extract the timestamp and convert it to a datetime object
+        timestamp = datetime.strptime(row[5], '%Y-%m-%d %H:%M:%S')
+        # Round down to the nearest 5-minute mark
+        timestamp_rounded = timestamp.replace(second=0, microsecond=0)
+        timestamp_rounded -= timedelta(minutes=timestamp_rounded.minute % 5)
+        
+        # Append values to their respective time window (rounded to 5 minutes)
+        data[timestamp_rounded].append({
+            'pm02': row[0],
+            'rco2': row[1],
+            'atmp': row[2],
+            'rhum': row[3]
+        })
 
-    # Calculate the averages for each 5-minute window
-    timestamps = []
-    pm02_values = []
-    rco2_values = []
-    atmp_values = []
-    rhum_values = []
-
-    for interval, values in time_intervals.items():
+    # Calculate the average for each 5-minute window
+    averages = []
+    for timestamp, values in data.items():
         avg_pm02 = sum(v['pm02'] for v in values) / len(values)
         avg_rco2 = sum(v['rco2'] for v in values) / len(values)
         avg_atmp = sum(v['atmp'] for v in values) / len(values)
         avg_rhum = sum(v['rhum'] for v in values) / len(values)
 
-        timestamps.append(interval.strftime('%A %H:%M'))
-        pm02_values.append(avg_pm02)
-        rco2_values.append(avg_rco2)
-        atmp_values.append(avg_atmp)
-        rhum_values.append(avg_rhum)
+        averages.append({
+            'timestamp': timestamp,
+            'avg_pm02': avg_pm02,
+            'avg_rco2': avg_rco2,
+            'avg_atmp': avg_atmp,
+            'avg_rhum': avg_rhum
+        })
 
-    # Return the averaged data for the charts
-    data = {
-        "timestamps": timestamps,
-        "pm02": pm02_values,
-        "rco2": rco2_values,
-        "atmp": atmp_values,
-        "rhum": rhum_values
+    # Format the data for Chart.js
+    chart_data = {
+        "timestamps": [ts.strftime('%A %H:%M') for ts in [avg['timestamp'] for avg in averages]],
+        "avg_pm02": [avg['avg_pm02'] for avg in averages],
+        "avg_rco2": [avg['avg_rco2'] for avg in averages],
+        "avg_atmp": [avg['avg_atmp'] for avg in averages],
+        "avg_rhum": [avg['avg_rhum'] for avg in averages]
     }
 
-    return data
+    return chart_data
 
 # GET endpoint to render HTML page with Chart.js using Jinja2 templates
 @app.get("/", response_class=HTMLResponse)
