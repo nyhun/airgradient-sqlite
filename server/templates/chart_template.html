@@ -204,7 +204,7 @@
                     {
                         type: 'box',
                         yMin: 100,
-                        yMax: Math.max(...data.pm02),
+                        yMax: Math.max(...data.pm02, 150),
                         backgroundColor: 'rgba(255, 0, 0, 0.2)',
                         borderColor: 'red',
                         borderWidth: 1,
@@ -220,7 +220,7 @@
                 const rco2Annotations = [
                     {
                         type: 'box',
-                        yMin: 200,
+                        yMin: Math.min(...data.rco2, 400),
                         yMax: 1000,
                         backgroundColor: 'rgba(0, 255, 0, 0.2)',
                         borderColor: 'green',
@@ -247,7 +247,7 @@
                     {
                         type: 'box',
                         yMin: 2000,
-                        yMax: Math.max(...data.rco2),
+                        yMax: Math.max(...data.rco2, 2200),
                         backgroundColor: 'rgba(255, 0, 0, 0.2)',
                         borderColor: 'red',
                         borderWidth: 1,
