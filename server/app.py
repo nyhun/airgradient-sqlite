@@ -26,9 +26,14 @@ def init_db():
 # Call this function to ensure the table exists
 init_db()
 
-# Pydanti
+{"wifi":-50,"pm02":38,"rco2":1060,"atmp":26.30,"rhum":28}
+
 class Log(BaseModel):
-    value: int
+    wifi: int
+    pm02: int
+    rco2: int
+    atmp: int
+    rhum: int
 
 # POST endpoint to log a number with timestamp
 @app.post("/log")
@@ -40,7 +45,7 @@ async def log_number(log: Log):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     # Insert the new log into the database
-    cursor.execute("INSERT INTO logs (value, timestamp) VALUES (?, ?)", (log.value, timestamp))
+    cursor.execute("INSERT INTO logs (value, timestamp) VALUES (?, ?)", (log.rco2, timestamp))
     conn.commit()
 
     conn.close()
