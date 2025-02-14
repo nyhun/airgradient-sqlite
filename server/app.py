@@ -126,10 +126,10 @@ async def get_data():
         
         grouped_data.append({
             'timestamp': current_window,
-            'avg_pm02': avg_pm02,
-            'avg_rco2': avg_rco2,
-            'avg_atmp': avg_atmp,
-            'avg_rhum': avg_rhum
+            'pm02': avg_pm02,
+            'rco2': avg_rco2,
+            'atmp': avg_atmp,
+            'rhum': avg_rhum
         })
 
     # Prepare data for Chart.js (timestamps formatted as 'Day Hour:Minute')
