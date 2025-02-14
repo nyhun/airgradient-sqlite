@@ -1,287 +1,164 @@
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Logged Values Charts</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
-        <style>
-            body {
-                font-family: 'Inter', sans-serif;
-                background-color: #f4f7f6;
-                color: #333;
-                margin: 0;
-                padding: 0;
-            }
-
-            h1 {
-                font-size: 2rem;
-                margin: 20px 0;
-                text-align: center;
-                color: #333;
-            }
-
-            .chart-container {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 30px;
-                max-width: 1200px;
-                margin: 40px auto;
-                padding: 20px;
-            }
-
-            .chart-card {
-                background-color: white;
-                border-radius: 8px;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-                padding: 20px;
-                text-align: center;
-            }
-
-            canvas {
-                width: 100% !important;
-                height: 250px !important;
-                border-radius: 8px;
-            }
-
-            h2 {
-                font-size: 1.25rem;
-                color: #333;
-                margin-bottom: 10px;
-            }
-
-            .chart-card h2 {
-                font-size: 1.1rem;
-                color: #444;
-                margin-bottom: 15px;
-            }
-
-            .chart-card .chart {
-                position: relative;
-            }
-
-            /* Mobile responsiveness */
-            @media (max-width: 768px) {
-                .chart-container {
-                    grid-template-columns: 1fr;
-                }
-
-                canvas {
-                    height: 200px !important;
-                }
-            }
-
-            /* Accent color */
-            .good {
-                background-color: rgba(0, 255, 0, 0.2);
-            }
-            .fair {
-                background-color: rgba(255, 255, 0, 0.2);
-            }
-            .poor {
-                background-color: rgba(255, 165, 0, 0.2);
-            }
-            .bad {
-                background-color: rgba(255, 0, 0, 0.2);
-            }
-        </style>
-    </head>
-
-    <body>
-        <h1>Logged Values in Last 24 Hours</h1>
-
-        <div class="chart-container">
-            <div class="chart-card">
-                <h2>PM02</h2>
-                <div class="chart">
-                    <canvas id="pm02Chart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card">
-                <h2>RCO2</h2>
-                <div class="chart">
-                    <canvas id="rco2Chart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card">
-                <h2>ATMP</h2>
-                <div class="chart">
-                    <canvas id="atmpChart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card">
-                <h2>RHUM</h2>
-                <div class="chart">
-                    <canvas id="rhumChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            fetch('/data')
-            .then(response => response.json())
-            .then(data => {
-                function createChart(ctx, data, label, annotations) {
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: data.timestamps,
-                            datasets: [{
-                                label: label,
-                                data: data[label.toLowerCase()],
-                                borderColor: '#4BC0C0',
-                                fill: false,
-                                borderWidth: 2,
-                                lineTension: 0.1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            scales: {
-                                x: {
-                                    ticks: {
-                                        maxRotation: 90,
-                                        minRotation: 45,
-                                    },
-                                },
-                                y: {
-                                    beginAtZero: false,
-                                },
+<script>
+    fetch('/data')
+    .then(response => response.json())
+    .then(data => {
+        function createChart(ctx, data, label, annotations) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.timestamps,
+                    datasets: [{
+                        label: label,
+                        data: data[label.toLowerCase()],
+                        borderColor: '#6c757d', // Soft gray line color
+                        pointBackgroundColor: '#6c757d', // Neutral gray dot color
+                        fill: false,
+                        borderWidth: 2,
+                        lineTension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 90,
+                                minRotation: 45,
                             },
-                            plugins: {
-                                annotation: {
-                                    annotations: annotations
-                                }
-                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                        },
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: annotations
                         }
-                    });
+                    }
                 }
-
-                // Annotations for PM02
-                const pm02Annotations = [
-                    {
-                        type: 'box',
-                        yMin: 0,
-                        yMax: 25,
-                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
-                        borderColor: 'green',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Good (0-25)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 25,
-                        yMax: 50,
-                        backgroundColor: 'rgba(255, 255, 0, 0.2)',
-                        borderColor: 'yellow',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Fair (25-50)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 50,
-                        yMax: 100,
-                        backgroundColor: 'rgba(255, 165, 0, 0.2)',
-                        borderColor: 'orange',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Poor (50-100)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 100,
-                        yMax: Math.max(...data.pm02, 140),
-                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                        borderColor: 'red',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Bad (>100)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    }
-                ];
-
-                // Annotations for RCO2
-                const rco2Annotations = [
-                    {
-                        type: 'box',
-                        yMin: Math.min(...data.rco2, 400),
-                        yMax: 1000,
-                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
-                        borderColor: 'green',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Good (200-1000)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 1000,
-                        yMax: 2000,
-                        backgroundColor: 'rgba(255, 255, 0, 0.2)',
-                        borderColor: 'yellow',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Suboptimal (1000-2000)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 2000,
-                        yMax: Math.max(...data.rco2, 2200),
-                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                        borderColor: 'red',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Bad (>2000)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    }
-                ];
-
-                // Annotations for RHUM
-                const rhumAnnotations = [
-                    {
-                        type: 'box',
-                        yMin: 30,
-                        yMax: 60,
-                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
-                        borderColor: 'green',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Good (30-60)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    }
-                ];
-
-                // Create charts
-                createChart(document.getElementById('pm02Chart').getContext('2d'), data, 'PM02', pm02Annotations);
-                createChart(document.getElementById('rco2Chart').getContext('2d'), data, 'RCO2', rco2Annotations);
-                createChart(document.getElementById('atmpChart').getContext('2d'), data, 'ATMP', []);
-                createChart(document.getElementById('rhumChart').getContext('2d'), data, 'RHUM', rhumAnnotations);
             });
-        </script>
-    </body>
-</html>
+        }
+
+        // Annotations for PM02 (neutral colors)
+        const pm02Annotations = [
+            {
+                type: 'box',
+                yMin: 0,
+                yMax: 25,
+                backgroundColor: 'rgba(173, 216, 230, 0.2)', // Light blue background
+                borderColor: '#6c757d', // Gray border
+                borderWidth: 1,
+                label: {
+                    content: 'Good',
+                    enabled: true,
+                    position: 'center'
+                }
+            },
+            {
+                type: 'box',
+                yMin: 25,
+                yMax: 50,
+                backgroundColor: 'rgba(211, 211, 211, 0.2)', // Light gray background
+                borderColor: '#6c757d', // Gray border
+                borderWidth: 1,
+                label: {
+                    content: 'Fair',
+                    enabled: true,
+                    position: 'center'
+                }
+            },
+            {
+                type: 'box',
+                yMin: 50,
+                yMax: 100,
+                backgroundColor: 'rgba(169, 169, 169, 0.2)', // Dark gray background
+                borderColor: '#6c757d', // Gray border
+                borderWidth: 1,
+                label: {
+                    content: 'Poor',
+                    enabled: true,
+                    position: 'center'
+                }
+            },
+            {
+                type: 'box',
+                yMin: 100,
+                yMax: Math.max(...data.pm02, 140),
+                backgroundColor: 'rgba(169, 169, 169, 0.2)', // Dark gray background
+                borderColor: '#6c757d', // Gray border
+                borderWidth: 1,
+                label: {
+                    content: 'Bad',
+                    enabled: true,
+                    position: 'center'
+                }
+            }
+        ];
+
+        // Annotations for RCO2 (neutral colors)
+        const rco2Annotations = [
+            {
+                type: 'box',
+                yMin: Math.min(...data.rco2, 400),
+                yMax: 1000,
+                backgroundColor: 'rgba(173, 216, 230, 0.2)', // Light blue background
+                borderColor: '#6c757d', // Gray border
+                borderWidth: 1,
+                label: {
+                    content: 'Good',
+                    enabled: true,
+                    position: 'center'
+                }
+            },
+            {
+                type: 'box',
+                yMin: 1000,
+                yMax: 2000,
+                backgroundColor: 'rgba(211, 211, 211, 0.2)', // Light gray background
+                borderColor: '#6c757d', // Gray border
+                borderWidth: 1,
+                label: {
+                    content: 'Suboptimal',
+                    enabled: true,
+                    position: 'center'
+                }
+            },
+            {
+                type: 'box',
+                yMin: 2000,
+                yMax: Math.max(...data.rco2, 2200),
+                backgroundColor: 'rgba(169, 169, 169, 0.2)', // Dark gray background
+                borderColor: '#6c757d', // Gray border
+                borderWidth: 1,
+                label: {
+                    content: 'Bad',
+                    enabled: true,
+                    position: 'center'
+                }
+            }
+        ];
+
+        // Annotations for RHUM (neutral colors)
+        const rhumAnnotations = [
+            {
+                type: 'box',
+                yMin: 30,
+                yMax: 60,
+                backgroundColor: 'rgba(173, 216, 230, 0.2)', // Light blue background
+                borderColor: '#6c757d', // Gray border
+                borderWidth: 1,
+                label: {
+                    content: 'Good',
+                    enabled: true,
+                    position: 'center'
+                }
+            }
+        ];
+
+        // Create charts
+        createChart(document.getElementById('pm02Chart').getContext('2d'), data, 'PM02', pm02Annotations);
+        createChart(document.getElementById('rco2Chart').getContext('2d'), data, 'RCO2', rco2Annotations);
+        createChart(document.getElementById('atmpChart').getContext('2d'), data, 'ATMP', []);
+        createChart(document.getElementById('rhumChart').getContext('2d'), data, 'RHUM', rhumAnnotations);
+    });
+</script>
