@@ -97,26 +97,64 @@ async def get_chart():
         <head>
             <title>Logged Values Charts</title>
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                }}
+                .chart-container {{
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 20px;
+                    width: 100%;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                }}
+                canvas {{
+                    width: 100% !important;
+                    height: 250px !important;
+                }}
+                h1 {{
+                    font-size: 24px;
+                    margin-bottom: 20px;
+                }}
+                h2 {{
+                    font-size: 20px;
+                    margin-bottom: 10px;
+                }}
+            </style>
         </head>
         <body>
             <h1>Logged Values in Last 24 Hours</h1>
 
-            <h2>PM02</h2>
-            <canvas id="pm02Chart" width="400" height="200"></canvas>
-
-            <h2>RCO2</h2>
-            <canvas id="rco2Chart" width="400" height="200"></canvas>
-
-            <h2>ATMP</h2>
-            <canvas id="atmpChart" width="400" height="200"></canvas>
-
-            <h2>RHUM</h2>
-            <canvas id="rhumChart" width="400" height="200"></canvas>
+            <div class="chart-container">
+                <div>
+                    <h2>PM02</h2>
+                    <canvas id="pm02Chart"></canvas>
+                </div>
+                <div>
+                    <h2>RCO2</h2>
+                    <canvas id="rco2Chart"></canvas>
+                </div>
+                <div>
+                    <h2>ATMP</h2>
+                    <canvas id="atmpChart"></canvas>
+                </div>
+                <div>
+                    <h2>RHUM</h2>
+                    <canvas id="rhumChart"></canvas>
+                </div>
+            </div>
 
             <script>
                 fetch('/data')
                 .then(response => response.json())
                 .then(data => {{
+                    function getLineColor(value) {{
+                        return value > 100 ? 'rgb(255, 99, 132)' : 'rgb(75, 192, 192)';
+                    }}
+
                     const pm02Ctx = document.getElementById('pm02Chart').getContext('2d');
                     new Chart(pm02Ctx, {{
                         type: 'line',
@@ -125,7 +163,7 @@ async def get_chart():
                             datasets: [{{
                                 label: 'PM02',
                                 data: data.pm02,
-                                borderColor: 'rgb(75, 192, 192)',
+                                borderColor: data.pm02.map(getLineColor),
                                 fill: false,
                             }}]
                         }},
@@ -135,6 +173,28 @@ async def get_chart():
                                     ticks: {{
                                         maxRotation: 90,
                                         minRotation: 45
+                                    }}
+                                }}
+                            }},
+                            plugins: {{
+                                annotation: {{
+                                    annotations: {{
+                                        line: {{
+                                            type: 'line',
+                                            yMin: 100,
+                                            yMax: 100,
+                                            borderColor: 'rgb(0, 0, 0)',
+                                            borderWidth: 2,
+                                            label: {{
+                                                content: 'Value 100',
+                                                enabled: true,
+                                                position: 'center',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                font: {{
+                                                    size: 12
+                                                }}
+                                            }}
+                                        }}
                                     }}
                                 }}
                             }}
@@ -149,7 +209,7 @@ async def get_chart():
                             datasets: [{{
                                 label: 'RCO2',
                                 data: data.rco2,
-                                borderColor: 'rgb(255, 99, 132)',
+                                borderColor: data.rco2.map(getLineColor),
                                 fill: false,
                             }}]
                         }},
@@ -159,6 +219,28 @@ async def get_chart():
                                     ticks: {{
                                         maxRotation: 90,
                                         minRotation: 45
+                                    }}
+                                }}
+                            }},
+                            plugins: {{
+                                annotation: {{
+                                    annotations: {{
+                                        line: {{
+                                            type: 'line',
+                                            yMin: 100,
+                                            yMax: 100,
+                                            borderColor: 'rgb(0, 0, 0)',
+                                            borderWidth: 2,
+                                            label: {{
+                                                content: 'Value 100',
+                                                enabled: true,
+                                                position: 'center',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                font: {{
+                                                    size: 12
+                                                }}
+                                            }}
+                                        }}
                                     }}
                                 }}
                             }}
@@ -173,7 +255,7 @@ async def get_chart():
                             datasets: [{{
                                 label: 'ATMP',
                                 data: data.atmp,
-                                borderColor: 'rgb(54, 162, 235)',
+                                borderColor: data.atmp.map(getLineColor),
                                 fill: false,
                             }}]
                         }},
@@ -183,6 +265,28 @@ async def get_chart():
                                     ticks: {{
                                         maxRotation: 90,
                                         minRotation: 45
+                                    }}
+                                }}
+                            }},
+                            plugins: {{
+                                annotation: {{
+                                    annotations: {{
+                                        line: {{
+                                            type: 'line',
+                                            yMin: 100,
+                                            yMax: 100,
+                                            borderColor: 'rgb(0, 0, 0)',
+                                            borderWidth: 2,
+                                            label: {{
+                                                content: 'Value 100',
+                                                enabled: true,
+                                                position: 'center',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                font: {{
+                                                    size: 12
+                                                }}
+                                            }}
+                                        }}
                                     }}
                                 }}
                             }}
@@ -197,7 +301,7 @@ async def get_chart():
                             datasets: [{{
                                 label: 'RHUM',
                                 data: data.rhum,
-                                borderColor: 'rgb(153, 102, 255)',
+                                borderColor: data.rhum.map(getLineColor),
                                 fill: false,
                             }}]
                         }},
@@ -207,6 +311,28 @@ async def get_chart():
                                     ticks: {{
                                         maxRotation: 90,
                                         minRotation: 45
+                                    }}
+                                }}
+                            }},
+                            plugins: {{
+                                annotation: {{
+                                    annotations: {{
+                                        line: {{
+                                            type: 'line',
+                                            yMin: 100,
+                                            yMax: 100,
+                                            borderColor: 'rgb(0, 0, 0)',
+                                            borderWidth: 2,
+                                            label: {{
+                                                content: 'Value 100',
+                                                enabled: true,
+                                                position: 'center',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                font: {{
+                                                    size: 12
+                                                }}
+                                            }}
+                                        }}
                                     }}
                                 }}
                             }}
