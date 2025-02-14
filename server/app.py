@@ -116,18 +116,18 @@ async def get_chart():
             <script>
                 fetch('/data')
                 .then(response => response.json())
-                .then(data => {
+                .then(data => {{
                     const pm02Ctx = document.getElementById('pm02Chart').getContext('2d');
                     new Chart(pm02Ctx, {{
                         type: 'line',
                         data: {{
                             labels: data.timestamps,
-                            datasets: [{
+                            datasets: [{{
                                 label: 'PM02',
                                 data: data.pm02,
                                 borderColor: 'rgb(75, 192, 192)',
                                 fill: false,
-                            }]
+                            }}]
                         }},
                         options: {{
                             scales: {{
@@ -146,12 +146,12 @@ async def get_chart():
                         type: 'line',
                         data: {{
                             labels: data.timestamps,
-                            datasets: [{
+                            datasets: [{{
                                 label: 'RCO2',
                                 data: data.rco2,
                                 borderColor: 'rgb(255, 99, 132)',
                                 fill: false,
-                            }]
+                            }}]
                         }},
                         options: {{
                             scales: {{
@@ -170,12 +170,12 @@ async def get_chart():
                         type: 'line',
                         data: {{
                             labels: data.timestamps,
-                            datasets: [{
+                            datasets: [{{
                                 label: 'ATMP',
                                 data: data.atmp,
                                 borderColor: 'rgb(54, 162, 235)',
                                 fill: false,
-                            }]
+                            }}]
                         }},
                         options: {{
                             scales: {{
@@ -194,12 +194,12 @@ async def get_chart():
                         type: 'line',
                         data: {{
                             labels: data.timestamps,
-                            datasets: [{
+                            datasets: [{{
                                 label: 'RHUM',
                                 data: data.rhum,
                                 borderColor: 'rgb(153, 102, 255)',
                                 fill: false,
-                            }]
+                            }}]
                         }},
                         options: {{
                             scales: {{
@@ -212,7 +212,7 @@ async def get_chart():
                             }}
                         }}
                     }});
-                });
+                }});
             </script>
         </body>
     </html>
