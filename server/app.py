@@ -75,46 +75,70 @@ async def get_data():
     if not rows:
         return {"message": "No data available for the last 24 hours"}
 
-    # Group data by 5-minute windows
-    data = defaultdict(list)
+    # Group data by 5-minute windows and calculate averages for pm02, rco2, atmp, rhum
+    grouped_data = []
+    current_window = None
+    current_window_data = []
+
     for row in rows:
         # Extract the timestamp and convert it to a datetime object
-        timestamp = datetime.strptime(row[5], '%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.strptime(row[4], '%Y-%m-%d %H:%M:%S')
+        
         # Round down to the nearest 5-minute mark
         timestamp_rounded = timestamp.replace(second=0, microsecond=0)
         timestamp_rounded -= timedelta(minutes=timestamp_rounded.minute % 5)
         
-        # Append values to their respective time window (rounded to 5 minutes)
-        data[timestamp_rounded].append({
+        # If we're not in the same 5-minute window, process the previous one
+        if current_window and current_window != timestamp_rounded:
+            # Calculate averages for the current window
+            avg_pm02 = sum(item['pm02'] for item in current_window_data) / len(current_window_data)
+            avg_rco2 = sum(item['rco2'] for item in current_window_data) / len(current_window_data)
+            avg_atmp = sum(item['atmp'] for item in current_window_data) / len(current_window_data)
+            avg_rhum = sum(item['rhum'] for item in current_window_data) / len(current_window_data)
+            
+            # Append the result to grouped_data
+            grouped_data.append({
+                'timestamp': current_window,
+                'avg_pm02': avg_pm02,
+                'avg_rco2': avg_rco2,
+                'avg_atmp': avg_atmp,
+                'avg_rhum': avg_rhum
+            })
+            
+            # Reset the window data
+            current_window_data = []
+
+        # Add the current row's data to the window data
+        current_window = timestamp_rounded
+        current_window_data.append({
             'pm02': row[0],
             'rco2': row[1],
             'atmp': row[2],
             'rhum': row[3]
         })
 
-    # Calculate the average for each 5-minute window
-    averages = []
-    for timestamp, values in data.items():
-        avg_pm02 = sum(v['pm02'] for v in values) / len(values)
-        avg_rco2 = sum(v['rco2'] for v in values) / len(values)
-        avg_atmp = sum(v['atmp'] for v in values) / len(values)
-        avg_rhum = sum(v['rhum'] for v in values) / len(values)
-
-        averages.append({
-            'timestamp': timestamp,
+    # Final window processing (if any data is left)
+    if current_window_data:
+        avg_pm02 = sum(item['pm02'] for item in current_window_data) / len(current_window_data)
+        avg_rco2 = sum(item['rco2'] for item in current_window_data) / len(current_window_data)
+        avg_atmp = sum(item['atmp'] for item in current_window_data) / len(current_window_data)
+        avg_rhum = sum(item['rhum'] for item in current_window_data) / len(current_window_data)
+        
+        grouped_data.append({
+            'timestamp': current_window,
             'avg_pm02': avg_pm02,
             'avg_rco2': avg_rco2,
             'avg_atmp': avg_atmp,
             'avg_rhum': avg_rhum
         })
 
-    # Format the data for Chart.js
+    # Prepare data for Chart.js (timestamps formatted as 'Day Hour:Minute')
     chart_data = {
-        "timestamps": [ts.strftime('%A %H:%M') for ts in [avg['timestamp'] for avg in averages]],
-        "avg_pm02": [avg['avg_pm02'] for avg in averages],
-        "avg_rco2": [avg['avg_rco2'] for avg in averages],
-        "avg_atmp": [avg['avg_atmp'] for avg in averages],
-        "avg_rhum": [avg['avg_rhum'] for avg in averages]
+        "timestamps": [ts.strftime('%A %H:%M') for ts in [entry['timestamp'] for entry in grouped_data]],
+        "avg_pm02": [entry['avg_pm02'] for entry in grouped_data],
+        "avg_rco2": [entry['avg_rco2'] for entry in grouped_data],
+        "avg_atmp": [entry['avg_atmp'] for entry in grouped_data],
+        "avg_rhum": [entry['avg_rhum'] for entry in grouped_data]
     }
 
     return chart_data
