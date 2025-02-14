@@ -3,6 +3,9 @@ A minimal, lightweight implementation for logging Airgradient sensor readings.
 
 Ideal for setting up a server on a Raspberry Pi.
 
+Firmware/server assumes single airgradient sensor in the house.
+(Code should be easily extendable to multiple device setup, by logging device ID to DB as well)
+
 For firmware, [C02_PM_SHT_OLED_WIFI.ino](https://github.com/airgradienthq/arduino/blob/1.4.2/examples/C02_PM_SHT_OLED_WIFI/C02_PM_SHT_OLED_WIFI.ino) was used as a starting point.
 
 ## Setup
