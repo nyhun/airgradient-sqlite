@@ -66,7 +66,7 @@ async def get_data():
 
     # Get the data from the last 24 hours
     last_24_hours = datetime.now() - timedelta(hours=24)
-    cursor.execute("SELECT wifi, pm02, rco2, atmp, rhum, timestamp FROM logs WHERE timestamp >= ?", 
+    cursor.execute("SELECT pm02, rco2, atmp, rhum, timestamp FROM logs WHERE timestamp >= ?", 
                    (last_24_hours.strftime('%Y-%m-%d %H:%M:%S'),))
     rows = cursor.fetchall()
 
