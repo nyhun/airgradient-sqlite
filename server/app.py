@@ -115,3 +115,8 @@ async def get_data():
 
     return data
 
+# GET endpoint to render HTML page with Chart.js using Jinja2 templates
+@app.get("/", response_class=HTMLResponse)
+async def get_chart(request: Request):
+    return templates.TemplateResponse("chart_template.html", {"request": request})
+
