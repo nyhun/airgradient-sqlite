@@ -132,11 +132,12 @@
                             datasets: [{
                                 label: label,
                                 data: data[label.toLowerCase()],
-                                borderColor: '#6c757d', // Soft gray line color
-                                pointBackgroundColor: '#6c757d', // Neutral gray dot color
+                                borderColor: '#6c757d', /* Neutral color: grayish blue */
                                 fill: false,
                                 borderWidth: 2,
-                                lineTension: 0.1
+                                lineTension: 0.1,
+                                pointBackgroundColor: '#6c757d', /* Matching neutral color for dots */
+                                pointBorderColor: '#495057' /* Slightly darker gray for point borders */
                             }]
                         },
                         options: {
@@ -160,15 +161,15 @@
                         }
                     });
                 }
-        
-                // Annotations for PM02 (neutral colors)
+
+                // Annotations for PM02
                 const pm02Annotations = [
                     {
                         type: 'box',
                         yMin: 0,
                         yMax: 25,
-                        backgroundColor: 'rgba(173, 216, 230, 0.2)', // Light blue background
-                        borderColor: '#6c757d', // Gray border
+                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                        borderColor: 'green',
                         borderWidth: 1,
                         label: {
                             content: 'Good (0-25)',
@@ -180,8 +181,8 @@
                         type: 'box',
                         yMin: 25,
                         yMax: 50,
-                        backgroundColor: 'rgba(211, 211, 211, 0.2)', // Light gray background
-                        borderColor: '#6c757d', // Gray border
+                        backgroundColor: 'rgba(255, 255, 0, 0.2)',
+                        borderColor: 'yellow',
                         borderWidth: 1,
                         label: {
                             content: 'Fair (25-50)',
@@ -193,8 +194,8 @@
                         type: 'box',
                         yMin: 50,
                         yMax: 100,
-                        backgroundColor: 'rgba(169, 169, 169, 0.2)', // Dark gray background
-                        borderColor: '#6c757d', // Gray border
+                        backgroundColor: 'rgba(255, 165, 0, 0.2)',
+                        borderColor: 'orange',
                         borderWidth: 1,
                         label: {
                             content: 'Poor (50-100)',
@@ -206,8 +207,8 @@
                         type: 'box',
                         yMin: 100,
                         yMax: Math.max(...data.pm02, 140),
-                        backgroundColor: 'rgba(169, 169, 169, 0.2)', // Dark gray background
-                        borderColor: '#6c757d', // Gray border
+                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                        borderColor: 'red',
                         borderWidth: 1,
                         label: {
                             content: 'Bad (>100)',
@@ -216,15 +217,15 @@
                         }
                     }
                 ];
-        
-                // Annotations for RCO2 (neutral colors)
+
+                // Annotations for RCO2
                 const rco2Annotations = [
                     {
                         type: 'box',
                         yMin: Math.min(...data.rco2, 400),
                         yMax: 1000,
-                        backgroundColor: 'rgba(173, 216, 230, 0.2)', // Light blue background
-                        borderColor: '#6c757d', // Gray border
+                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                        borderColor: 'green',
                         borderWidth: 1,
                         label: {
                             content: 'Good (200-1000)',
@@ -236,8 +237,8 @@
                         type: 'box',
                         yMin: 1000,
                         yMax: 2000,
-                        backgroundColor: 'rgba(211, 211, 211, 0.2)', // Light gray background
-                        borderColor: '#6c757d', // Gray border
+                        backgroundColor: 'rgba(255, 255, 0, 0.2)',
+                        borderColor: 'yellow',
                         borderWidth: 1,
                         label: {
                             content: 'Suboptimal (1000-2000)',
@@ -249,8 +250,8 @@
                         type: 'box',
                         yMin: 2000,
                         yMax: Math.max(...data.rco2, 2200),
-                        backgroundColor: 'rgba(169, 169, 169, 0.2)', // Dark gray background
-                        borderColor: '#6c757d', // Gray border
+                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                        borderColor: 'red',
                         borderWidth: 1,
                         label: {
                             content: 'Bad (>2000)',
@@ -259,15 +260,15 @@
                         }
                     }
                 ];
-        
-                // Annotations for RHUM (neutral colors)
+
+                // Annotations for RHUM
                 const rhumAnnotations = [
                     {
                         type: 'box',
                         yMin: 30,
                         yMax: 60,
-                        backgroundColor: 'rgba(173, 216, 230, 0.2)', // Light blue background
-                        borderColor: '#6c757d', // Gray border
+                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                        borderColor: 'green',
                         borderWidth: 1,
                         label: {
                             content: 'Good (30-60)',
@@ -276,11 +277,13 @@
                         }
                     }
                 ];
-        
+
                 // Create charts
                 createChart(document.getElementById('pm02Chart').getContext('2d'), data, 'PM02', pm02Annotations);
                 createChart(document.getElementById('rco2Chart').getContext('2d'), data, 'RCO2', rco2Annotations);
                 createChart(document.getElementById('atmpChart').getContext('2d'), data, 'ATMP', []);
                 createChart(document.getElementById('rhumChart').getContext('2d'), data, 'RHUM', rhumAnnotations);
             });
-        </script>        
+        </script>
+    </body>
+</html>
