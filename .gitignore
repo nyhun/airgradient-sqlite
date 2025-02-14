@@ -1,0 +1,11 @@
+# sqlite file
+server/logs.db
+
+# pyenv files
+server/bin
+server/include
+server/lib
+server/__pycache__
+server/pyvenv.cfg
+server/share
+server/lib64
