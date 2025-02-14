@@ -89,7 +89,6 @@ async def get_data():
 
     return data
 
-# GET endpoint to render HTML page with multiple charts
 @app.get("/", response_class=HTMLResponse)
 async def get_chart():
     return HTMLResponse(content=f"""
@@ -201,6 +200,19 @@ async def get_chart():
                         }}
                     }});
 
+                    // Define the colors based on RCO2 values
+                    function getRCO2LineColor(value) {{
+                        if (value >= 400 && value <= 1000) {{
+                            return 'rgb(75, 192, 192)';  // Green (Good)
+                        }} else if (value > 1000 && value <= 2000) {{
+                            return 'rgb(255, 205, 86)';  // Yellow (Suboptimal)
+                        }} else if (value > 2000) {{
+                            return 'rgb(255, 99, 132)';  // Red (Bad)
+                        }} else {{
+                            return 'rgb(75, 192, 192)';  // Default Green
+                        }}
+                    }}
+
                     const rco2Ctx = document.getElementById('rco2Chart').getContext('2d');
                     new Chart(rco2Ctx, {{
                         type: 'line',
@@ -209,7 +221,7 @@ async def get_chart():
                             datasets: [{{
                                 label: 'RCO2',
                                 data: data.rco2,
-                                borderColor: data.rco2.map(getLineColor),
+                                borderColor: data.rco2.map(getRCO2LineColor),
                                 fill: false,
                             }}]
                         }},
@@ -225,14 +237,46 @@ async def get_chart():
                             plugins: {{
                                 annotation: {{
                                     annotations: {{
-                                        line: {{
+                                        line1: {{
                                             type: 'line',
-                                            yMin: 100,
-                                            yMax: 100,
-                                            borderColor: 'rgb(0, 0, 0)',
+                                            yMin: 400,
+                                            yMax: 400,
+                                            borderColor: 'rgb(75, 192, 192)',
                                             borderWidth: 2,
                                             label: {{
-                                                content: 'Value 100',
+                                                content: 'Good (400-1000)',
+                                                enabled: true,
+                                                position: 'center',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                font: {{
+                                                    size: 12
+                                                }}
+                                            }}
+                                        }},
+                                        line2: {{
+                                            type: 'line',
+                                            yMin: 1000,
+                                            yMax: 1000,
+                                            borderColor: 'rgb(255, 205, 86)',
+                                            borderWidth: 2,
+                                            label: {{
+                                                content: 'Suboptimal (1000-2000)',
+                                                enabled: true,
+                                                position: 'center',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                font: {{
+                                                    size: 12
+                                                }}
+                                            }}
+                                        }},
+                                        line3: {{
+                                            type: 'line',
+                                            yMin: 2000,
+                                            yMax: 2000,
+                                            borderColor: 'rgb(255, 99, 132)',
+                                            borderWidth: 2,
+                                            label: {{
+                                                content: 'Bad (>2000)',
                                                 enabled: true,
                                                 position: 'center',
                                                 backgroundColor: 'rgba(255, 255, 255, 0.7)',
