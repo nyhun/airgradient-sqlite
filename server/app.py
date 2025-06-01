@@ -84,11 +84,11 @@ async def get_data():
         # Extract the timestamp and convert it to a datetime object
         timestamp = datetime.strptime(row[4], '%Y-%m-%d %H:%M:%S')
         
-        # Round down to the nearest 5-minute mark
+        # Round down to the nearest 15-minute mark
         timestamp_rounded = timestamp.replace(second=0, microsecond=0)
-        timestamp_rounded -= timedelta(minutes=timestamp_rounded.minute % 5)
+        timestamp_rounded -= timedelta(minutes=timestamp_rounded.minute % 15)
         
-        # If we're not in the same 5-minute window, process the previous one
+        # If we're not in the same 15-minute window, process the previous one
         if current_window and current_window != timestamp_rounded:
             # Calculate averages for the current window
             avg_pm02 = sum(item['pm02'] for item in current_window_data) / len(current_window_data)
