@@ -23,7 +23,7 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         pm02 INTEGER,
         rco2 INTEGER,
-        atmp INTEGER,
+        atmp FLOAT,
         rhum INTEGER,
         timestamp TEXT
     )''')
