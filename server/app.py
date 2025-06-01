@@ -37,7 +37,7 @@ class Log(BaseModel):
     wifi: int
     pm02: int
     rco2: int
-    atmp: int
+    atmp: float
     rhum: int
 
 # POST endpoint to log a number with timestamp
