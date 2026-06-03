@@ -71,24 +71,53 @@
                 }
             }
 
-            /* Accent color */
-            .good {
-                background-color: rgba(0, 255, 0, 0.2);
+            .header {
+                text-align: center;
+                padding-top: 20px;
             }
-            .fair {
-                background-color: rgba(255, 255, 0, 0.2);
+
+            .controls {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
             }
-            .poor {
-                background-color: rgba(255, 165, 0, 0.2);
+
+            .controls label {
+                font-size: 1rem;
+                color: #555;
             }
-            .bad {
-                background-color: rgba(255, 0, 0, 0.2);
+
+            .controls select {
+                padding: 6px 14px;
+                border-radius: 6px;
+                border: 1px solid #ccc;
+                font-size: 1rem;
+                background: white;
+                color: #333;
+                cursor: pointer;
             }
         </style>
     </head>
 
     <body>
-        <h1>Logged Values in Last 24 Hours</h1>
+        <div class="header">
+            <h1 id="timeTitle">Logged Values in Last 1 Day</h1>
+            <div class="controls">
+                <label for="timespan">Time Range:</label>
+                <select id="timespan">
+                    <option value="8">8 Hours</option>
+                    <option value="24" selected>1 Day</option>
+                    <option value="48">2 Days</option>
+                    <option value="72">3 Days</option>
+                    <option value="96">4 Days</option>
+                    <option value="120">5 Days</option>
+                    <option value="144">6 Days</option>
+                    <option value="168">1 Week</option>
+                </select>
+            </div>
+        </div>
 
         <div class="chart-container">
             <div class="chart-card">
@@ -121,169 +150,84 @@
         </div>
 
         <script>
-            fetch('/data')
-            .then(response => response.json())
-            .then(data => {
-                function createChart(ctx, data, label, annotations) {
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: data.timestamps,
-                            datasets: [{
-                                label: label,
-                                data: data[label.toLowerCase()],
-                                borderColor: '#6c757d', /* Neutral color: grayish blue */
-                                fill: false,
-                                borderWidth: 2,
-                                lineTension: 0.1,
-                                pointBackgroundColor: '#6c757d', /* Matching neutral color for dots */
-                                pointBorderColor: '#495057' /* Slightly darker gray for point borders */
-                            }]
+            const TIMESPAN_LABELS = {
+                8: '8 Hours', 24: '1 Day', 48: '2 Days',
+                72: '3 Days', 96: '4 Days', 120: '5 Days',
+                144: '6 Days', 168: '1 Week'
+            };
+
+            let chartInstances = {};
+
+            function createChart(ctx, timestamps, values, label, annotations) {
+                return new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: timestamps,
+                        datasets: [{
+                            label: label,
+                            data: values,
+                            borderColor: '#6c757d',
+                            fill: false,
+                            borderWidth: 2,
+                            lineTension: 0.1,
+                            pointBackgroundColor: '#6c757d',
+                            pointBorderColor: '#495057'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { ticks: { maxRotation: 90, minRotation: 45 } },
+                            y: { beginAtZero: false }
                         },
-                        options: {
-                            responsive: true,
-                            scales: {
-                                x: {
-                                    ticks: {
-                                        maxRotation: 90,
-                                        minRotation: 45,
-                                    },
-                                },
-                                y: {
-                                    beginAtZero: false,
-                                },
-                            },
-                            plugins: {
-                                annotation: {
-                                    annotations: annotations
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // Annotations for PM02
-                const pm02Annotations = [
-                    {
-                        type: 'box',
-                        yMin: 0,
-                        yMax: 25,
-                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
-                        borderColor: 'green',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Good (0-25)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 25,
-                        yMax: 50,
-                        backgroundColor: 'rgba(255, 255, 0, 0.2)',
-                        borderColor: 'yellow',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Fair (25-50)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 50,
-                        yMax: 100,
-                        backgroundColor: 'rgba(255, 165, 0, 0.2)',
-                        borderColor: 'orange',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Poor (50-100)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 100,
-                        yMax: Math.max(...data.pm02, 140),
-                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                        borderColor: 'red',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Bad (>100)',
-                            enabled: true,
-                            position: 'center'
+                        plugins: {
+                            annotation: { annotations: annotations }
                         }
                     }
-                ];
+                });
+            }
 
-                // Annotations for RCO2
-                const rco2Annotations = [
-                    {
-                        type: 'box',
-                        yMin: Math.min(...data.rco2, 400),
-                        yMax: 1000,
-                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
-                        borderColor: 'green',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Good (200-1000)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 1000,
-                        yMax: 2000,
-                        backgroundColor: 'rgba(255, 255, 0, 0.2)',
-                        borderColor: 'yellow',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Suboptimal (1000-2000)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    },
-                    {
-                        type: 'box',
-                        yMin: 2000,
-                        yMax: Math.max(...data.rco2, 2200),
-                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                        borderColor: 'red',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Bad (>2000)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    }
-                ];
+            function loadData(hours) {
+                fetch(`/data?hours=${hours}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) return;
 
-                // Annotations for RHUM
-                const rhumAnnotations = [
-                    {
-                        type: 'box',
-                        yMin: 30,
-                        yMax: 60,
-                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
-                        borderColor: 'green',
-                        borderWidth: 1,
-                        label: {
-                            content: 'Good (30-60)',
-                            enabled: true,
-                            position: 'center'
-                        }
-                    }
-                ];
+                    document.getElementById('timeTitle').textContent =
+                        `Logged Values in Last ${TIMESPAN_LABELS[hours]}`;
 
-                // Create charts
-                createChart(document.getElementById('pm02Chart').getContext('2d'), data, 'PM02', pm02Annotations);
-                createChart(document.getElementById('rco2Chart').getContext('2d'), data, 'RCO2', rco2Annotations);
-                createChart(document.getElementById('atmpChart').getContext('2d'), data, 'ATMP', []);
-                createChart(document.getElementById('rhumChart').getContext('2d'), data, 'RHUM', rhumAnnotations);
+                    Object.values(chartInstances).forEach(c => c.destroy());
+                    chartInstances = {};
+
+                    const pm02Annotations = [
+                        { type: 'box', yMin: 0, yMax: 25, backgroundColor: 'rgba(0, 255, 0, 0.2)', borderColor: 'green', borderWidth: 1, label: { content: 'Good (0-25)', enabled: true, position: 'center' } },
+                        { type: 'box', yMin: 25, yMax: 50, backgroundColor: 'rgba(255, 255, 0, 0.2)', borderColor: 'yellow', borderWidth: 1, label: { content: 'Fair (25-50)', enabled: true, position: 'center' } },
+                        { type: 'box', yMin: 50, yMax: 100, backgroundColor: 'rgba(255, 165, 0, 0.2)', borderColor: 'orange', borderWidth: 1, label: { content: 'Poor (50-100)', enabled: true, position: 'center' } },
+                        { type: 'box', yMin: 100, yMax: Math.max(...data.pm02, 140), backgroundColor: 'rgba(255, 0, 0, 0.2)', borderColor: 'red', borderWidth: 1, label: { content: 'Bad (>100)', enabled: true, position: 'center' } }
+                    ];
+
+                    const rco2Annotations = [
+                        { type: 'box', yMin: Math.min(...data.rco2, 400), yMax: 1000, backgroundColor: 'rgba(0, 255, 0, 0.2)', borderColor: 'green', borderWidth: 1, label: { content: 'Good (200-1000)', enabled: true, position: 'center' } },
+                        { type: 'box', yMin: 1000, yMax: 2000, backgroundColor: 'rgba(255, 255, 0, 0.2)', borderColor: 'yellow', borderWidth: 1, label: { content: 'Suboptimal (1000-2000)', enabled: true, position: 'center' } },
+                        { type: 'box', yMin: 2000, yMax: Math.max(...data.rco2, 2200), backgroundColor: 'rgba(255, 0, 0, 0.2)', borderColor: 'red', borderWidth: 1, label: { content: 'Bad (>2000)', enabled: true, position: 'center' } }
+                    ];
+
+                    const rhumAnnotations = [
+                        { type: 'box', yMin: 30, yMax: 60, backgroundColor: 'rgba(0, 255, 0, 0.2)', borderColor: 'green', borderWidth: 1, label: { content: 'Good (30-60)', enabled: true, position: 'center' } }
+                    ];
+
+                    chartInstances.pm02 = createChart(document.getElementById('pm02Chart').getContext('2d'), data.timestamps, data.pm02, 'PM02', pm02Annotations);
+                    chartInstances.rco2 = createChart(document.getElementById('rco2Chart').getContext('2d'), data.timestamps, data.rco2, 'RCO2', rco2Annotations);
+                    chartInstances.atmp = createChart(document.getElementById('atmpChart').getContext('2d'), data.timestamps, data.atmp, 'ATMP', []);
+                    chartInstances.rhum = createChart(document.getElementById('rhumChart').getContext('2d'), data.timestamps, data.rhum, 'RHUM', rhumAnnotations);
+                });
+            }
+
+            document.getElementById('timespan').addEventListener('change', function() {
+                loadData(parseInt(this.value));
             });
+
+            loadData(24);
         </script>
     </body>
 </html>

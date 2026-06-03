@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -58,37 +58,50 @@ async def log_number(log: Log):
 
     return {"message": "Values logged successfully!"}
 
-# GET endpoint to fetch data from the last 24 hours
+# Aggregation window in minutes for each supported timespan
+WINDOW_MINUTES = {
+    8: 5,
+    24: 15,
+    48: 30,
+    72: 45,
+    96: 60,
+    120: 75,
+    144: 90,
+    168: 105,
+}
+
+# GET endpoint to fetch data for a configurable timespan
 @app.get("/data")
-async def get_data():
+async def get_data(hours: int = 24):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Get the data from the last 24 hours
-    last_24_hours = datetime.now() - timedelta(hours=24)
-    cursor.execute("SELECT pm02, rco2, atmp, rhum, timestamp FROM logs WHERE timestamp >= ?", 
-                   (last_24_hours.strftime('%Y-%m-%d %H:%M:%S'),))
+    if hours not in WINDOW_MINUTES:
+        raise HTTPException(status_code=422, detail=f"Invalid hours value. Must be one of: {sorted(WINDOW_MINUTES)}")
+    window_minutes = WINDOW_MINUTES[hours]
+
+    since = datetime.now() - timedelta(hours=hours)
+    cursor.execute("SELECT pm02, rco2, atmp, rhum, timestamp FROM logs WHERE timestamp >= ?",
+                   (since.strftime('%Y-%m-%d %H:%M:%S'),))
     rows = cursor.fetchall()
 
     conn.close()
 
     if not rows:
-        return {"message": "No data available for the last 24 hours"}
+        return {"message": f"No data available for the last {hours} hours"}
 
-    # Group data by 5-minute windows and calculate averages for pm02, rco2, atmp, rhum
+    # Group data by window_minutes intervals and calculate averages
     grouped_data = []
     current_window = None
     current_window_data = []
 
     for row in rows:
-        # Extract the timestamp and convert it to a datetime object
         timestamp = datetime.strptime(row[4], '%Y-%m-%d %H:%M:%S')
-        
-        # Round down to the nearest 15-minute mark
+
+        # Round down to the nearest window_minutes mark
         timestamp_rounded = timestamp.replace(second=0, microsecond=0)
-        timestamp_rounded -= timedelta(minutes=timestamp_rounded.minute % 15)
+        timestamp_rounded -= timedelta(minutes=timestamp_rounded.minute % window_minutes)
         
-        # If we're not in the same 15-minute window, process the previous one
         if current_window and current_window != timestamp_rounded:
             # Calculate averages for the current window
             avg_pm02 = sum(item['pm02'] for item in current_window_data) / len(current_window_data)
