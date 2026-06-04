@@ -81,8 +81,10 @@ async def get_data(hours: int = 24):
     window_minutes = WINDOW_MINUTES[hours]
 
     since = datetime.now() - timedelta(hours=hours)
-    cursor.execute("SELECT pm02, rco2, atmp, rhum, timestamp FROM logs WHERE timestamp >= ?",
-                   (since.strftime('%Y-%m-%d %H:%M:%S'),))
+    cursor.execute(
+        "SELECT pm02, rco2, atmp, rhum, timestamp FROM logs WHERE timestamp >= ? ORDER BY timestamp",
+        (since.strftime('%Y-%m-%d %H:%M:%S'),)
+    )
     rows = cursor.fetchall()
 
     conn.close()
@@ -98,9 +100,15 @@ async def get_data(hours: int = 24):
     for row in rows:
         timestamp = datetime.strptime(row[4], '%Y-%m-%d %H:%M:%S')
 
-        # Round down to the nearest window_minutes mark
-        timestamp_rounded = timestamp.replace(second=0, microsecond=0)
-        timestamp_rounded -= timedelta(minutes=timestamp_rounded.minute % window_minutes)
+        # Round down to the nearest window_minutes boundary (works for windows > 60 min too)
+        total_minutes = timestamp.hour * 60 + timestamp.minute
+        floor_minutes = (total_minutes // window_minutes) * window_minutes
+        timestamp_rounded = timestamp.replace(
+            hour=floor_minutes // 60,
+            minute=floor_minutes % 60,
+            second=0,
+            microsecond=0
+        )
         
         if current_window and current_window != timestamp_rounded:
             # Calculate averages for the current window
