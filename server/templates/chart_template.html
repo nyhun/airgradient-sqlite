@@ -162,8 +162,10 @@
                     const active = chart.tooltip?.getActiveElements?.();
                     if (!active?.length) return;
                     const ctx = chart.ctx;
-                    const x = chart.tooltip.caretX;
-                    const { top, bottom } = chart.scales.y;
+                    const dpr = window.devicePixelRatio || 1;
+                    const x = active[0].element.x / dpr;
+                    const top = chart.scales.y.top / dpr;
+                    const bottom = chart.scales.y.bottom / dpr;
                     ctx.save();
                     ctx.beginPath();
                     ctx.moveTo(x, top);
