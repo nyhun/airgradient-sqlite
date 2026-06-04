@@ -156,6 +156,27 @@
                 144: '6 Days', 168: '1 Week'
             };
 
+            Chart.register({
+                id: 'crosshair',
+                afterDraw(chart) {
+                    if (chart.tooltip._active && chart.tooltip._active.length) {
+                        const ctx = chart.ctx;
+                        const x = chart.tooltip._active[0].element.x;
+                        const topY = chart.scales.y.top;
+                        const bottomY = chart.scales.y.bottom;
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(x, topY);
+                        ctx.lineTo(x, bottomY);
+                        ctx.lineWidth = 1;
+                        ctx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
+                        ctx.setLineDash([4, 3]);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                }
+            });
+
             let chartInstances = {};
 
             function createChart(ctx, timestamps, values, label, annotations) {
@@ -171,11 +192,16 @@
                             borderWidth: 2,
                             lineTension: 0.1,
                             pointBackgroundColor: '#6c757d',
-                            pointBorderColor: '#495057'
+                            pointBorderColor: '#495057',
+                            pointRadius: 2
                         }]
                     },
                     options: {
                         responsive: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
                         scales: {
                             x: { ticks: { maxRotation: 90, minRotation: 45 } },
                             y: { beginAtZero: false }
