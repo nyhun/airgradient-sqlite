@@ -1,259 +1,244 @@
+<!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Logged Values Charts</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
-        <style>
-            body {
-                font-family: 'Inter', sans-serif;
-                background-color: #f4f7f6;
-                color: #333;
-                margin: 0;
-                padding: 0;
-            }
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AirGradient</title>
+<link rel="stylesheet" href="/static/uPlot.min.css">
+<style>
+:root {
+  --bg:#111217; --panel:#181b1f; --border:#2c3235; --text:#ccccdc; --muted:#8e8e9e;
+  --accent:#3d71d9; --grid:rgba(204,204,220,.08);
+  --good:#73bf69; --warn:#f2cc0c; --poor:#ff9830; --bad:#f2495c;
+  --c-pm02:#ff9830; --c-rco2:#5794f2; --c-atmp:#f2495c; --c-rhum:#73bf69;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme=dark]) {
+    --bg:#f4f5f5; --panel:#fff; --border:#d7d9dc; --text:#24292e; --muted:#6c7280;
+    --grid:rgba(0,0,0,.07); --good:#37872d; --warn:#c79a00; --poor:#e0752d; --bad:#c4162a;
+    --c-pm02:#e0752d; --c-rco2:#1f60c4; --c-atmp:#c4162a; --c-rhum:#37872d;
+  }
+}
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif }
+header { position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  padding:8px 16px; background:var(--panel); border-bottom:1px solid var(--border) }
+header h1 { font-size:16px; margin:0 12px 0 0; font-weight:600 }
+.grp { display:flex; align-items:center; gap:4px }
+.grp > label { color:var(--muted); font-size:12px }
+select, input, button { background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:4px;
+  padding:5px 8px; font:inherit; min-height:30px }
+button { cursor:pointer } button:hover, select:hover { border-color:var(--muted) }
+button.on { background:var(--accent); border-color:var(--accent); color:#fff }
+.chip { display:inline-flex; align-items:center; gap:6px }
+.chip::before { content:""; width:10px; height:10px; border-radius:2px; background:var(--c) }
+.chip:not(.on) { opacity:.55 } .chip.on { background:var(--bg); border-color:var(--c); color:var(--text) }
+.spacer { flex:1 }
+#custom { display:none } #custom.show { display:flex }
+main { padding:12px 16px 24px; display:grid; gap:12px; grid-template-columns:repeat(4,1fr) }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:4px; min-width:0 }
+.stat { padding:10px 14px; border-left:3px solid var(--c) }
+.stat .name { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em }
+.stat .val { font-size:28px; font-weight:600; color:var(--vc, var(--text)) }
+.stat .sub { color:var(--muted); font-size:12px }
+.chartp { grid-column:span 2 } .chartp.wide { grid-column:1/-1 }
+.chartp h2 { margin:0; padding:8px 12px; font-size:13px; font-weight:600; display:flex; justify-content:space-between }
+.chartp h2 span { color:var(--muted); font-weight:400 }
+.plot { padding:0 4px 6px }
+#msg { grid-column:1/-1; text-align:center; color:var(--muted); padding:40px; display:none }
+.u-legend { font-size:12px; color:var(--text) } .u-legend .u-value { min-width:5em }
+.u-select { background:rgba(61,113,217,.25) }
+@media (max-width:1000px) { main { grid-template-columns:repeat(2,1fr) } }
+@media (max-width:700px) { main { grid-template-columns:1fr 1fr } .chartp { grid-column:1/-1 } header h1 { width:100% } }
+</style>
+</head>
+<body>
+<header>
+  <h1>AirGradient</h1>
+  <div class="grp" id="metrics"></div>
+  <div class="spacer"></div>
+  <div class="grp"><label for="range">Range</label>
+    <select id="range">
+      <option value="3600">Last 1 hour</option><option value="21600">Last 6 hours</option>
+      <option value="43200">Last 12 hours</option><option value="86400">Last 24 hours</option>
+      <option value="172800">Last 2 days</option><option value="604800">Last 7 days</option>
+      <option value="1209600">Last 14 days</option><option value="2592000">Last 30 days</option>
+      <option value="7776000">Last 90 days</option><option value="31536000">Last 1 year</option>
+      <option value="today">Today</option><option value="yesterday">Yesterday</option>
+      <option value="custom">Custom…</option>
+    </select></div>
+  <div class="grp" id="custom">
+    <input type="datetime-local" id="from"><span>→</span><input type="datetime-local" id="to">
+    <button id="apply">Apply</button></div>
+  <div class="grp"><label for="agg">Aggregate</label>
+    <select id="agg"><option value="avg">avg</option><option value="min">min</option><option value="max">max</option></select>
+    <label for="step">per</label>
+    <select id="step"><option value="0">auto</option><option value="30">30 s</option><option value="60">1 min</option>
+      <option value="300">5 min</option><option value="900">15 min</option><option value="3600">1 h</option>
+      <option value="21600">6 h</option><option value="86400">1 day</option></select></div>
+  <div class="grp"><label for="refresh">Refresh</label>
+    <select id="refresh"><option value="0">off</option><option value="30">30 s</option><option value="60" selected>1 min</option>
+      <option value="300">5 min</option></select>
+    <button id="reload" title="Reload now">⟳</button></div>
+</header>
+<main id="main"><div id="msg">No data in this range</div></main>
+<script src="/static/uPlot.iife.min.js"></script>
+<script>
+"use strict";
+const METRICS = {
+  pm02: { name:"PM2.5", unit:"µg/m³", dec:0, bands:[[0,25,"good"],[25,50,"warn"],[50,100,"poor"],[100,1e9,"bad"]] },
+  rco2: { name:"CO₂", unit:"ppm", dec:0, bands:[[0,1000,"good"],[1000,2000,"warn"],[2000,1e9,"bad"]] },
+  atmp: { name:"Temperature", unit:"°C", dec:1, bands:[] },
+  rhum: { name:"Humidity", unit:"%", dec:0, bands:[[30,60,"good"]] },
+};
+const KEYS = Object.keys(METRICS);
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
-            h1 {
-                font-size: 2rem;
-                margin: 20px 0;
-                text-align: center;
-                color: #333;
-            }
+// ---- state (persisted in URL hash so views are shareable / survive reloads)
+const st = Object.assign({ range:"86400", agg:"avg", step:"0", refresh:"60", show:KEYS.join(","), from:"", to:"" },
+  Object.fromEntries(new URLSearchParams(location.hash.slice(1))));
+const saveState = () => history.replaceState(null, "", "#" + new URLSearchParams(st));
 
-            .chart-container {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 30px;
-                max-width: 1200px;
-                margin: 40px auto;
-                padding: 20px;
-            }
+let data = null, plots = {}, timer = null, zoom = null, ctrl = null;
+const shown = () => st.show.split(",").filter(k => METRICS[k]);
 
-            .chart-card {
-                background-color: white;
-                border-radius: 8px;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-                padding: 20px;
-                text-align: center;
-            }
+// ---- header controls
+const mbox = $("metrics");
+for (const k of KEYS) {
+  const b = document.createElement("button");
+  b.className = "chip"; b.style.setProperty("--c", `var(--c-${k})`); b.textContent = METRICS[k].name; b.dataset.k = k;
+  b.onclick = () => {
+    const s = new Set(shown()); s.has(k) ? s.delete(k) : s.add(k);
+    st.show = KEYS.filter(x => s.has(x)).join(","); saveState(); syncChips(); render();
+  };
+  mbox.append(b);
+}
+const syncChips = () => mbox.querySelectorAll("button").forEach(b => b.classList.toggle("on", shown().includes(b.dataset.k)));
+for (const id of ["range","agg","step","refresh"]) {
+  $(id).value = st[id];
+  $(id).onchange = () => { st[id] = $(id).value; zoom = null; if (id === "refresh") schedule(); else load(); saveState(); syncCustom(); };
+}
+function syncCustom() { $("custom").classList.toggle("show", st.range === "custom"); }
+$("apply").onclick = () => { st.from = $("from").value; st.to = $("to").value; zoom = null; saveState(); load(); };
+$("reload").onclick = () => load();
+if (st.from) $("from").value = st.from; if (st.to) $("to").value = st.to;
+const wall = v => Math.floor(new Date(v + ":00Z").getTime() / 1000);  // datetime-local text -> wall-clock epoch
+const toInput = e => new Date(e * 1000).toISOString().slice(0, 16);
 
-            canvas {
-                width: 100% !important;
-                height: 250px !important;
-                border-radius: 8px;
-            }
+function schedule() {
+  clearInterval(timer);
+  const s = +st.refresh;
+  // don't poll while the tab is hidden; avoids needless Pi work
+  if (s) timer = setInterval(() => { if (!document.hidden && !zoom && st.range !== "custom") load(); }, s * 1000);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && +st.refresh && !zoom) load(); });
 
-            h2 {
-                font-size: 1.25rem;
-                color: #333;
-                margin-bottom: 10px;
-            }
+// ---- data
+function query() {
+  const p = new URLSearchParams({ agg:st.agg, step:st.step });
+  if (zoom) { p.set("start", zoom[0]); p.set("end", zoom[1]); }
+  else if (st.range === "custom") {
+    if (st.from) p.set("start", wall(st.from)); if (st.to) p.set("end", wall(st.to));
+  } else if (st.range === "today" || st.range === "yesterday") {
+    const d = new Date(), mid = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 1000);
+    const s = st.range === "today" ? mid : mid - 86400;
+    p.set("start", s); p.set("end", s + 86400);
+  } else p.set("last", st.range);
+  return p;
+}
+async function load() {
+  if (ctrl) ctrl.abort(); ctrl = new AbortController();
+  try {
+    const r = await fetch("/data?" + query(), { signal: ctrl.signal });
+    if (!r.ok) throw new Error((await r.json()).detail || r.status);
+    data = gaps(await r.json()); render();
+  } catch (e) { if (e.name !== "AbortError") showMsg("Error: " + e.message); }
+}
+// a gap larger than 3 steps breaks the line (sensor offline)
+function gaps(d) {
+  const t = [], cols = KEYS.map(() => []);
+  d.t.forEach((x, i) => {
+    if (i && x - d.t[i - 1] > 3 * d.step) { t.push(x - d.step); cols.forEach(c => c.push(null)); }
+    t.push(x); KEYS.forEach((k, j) => cols[j].push(d[k][i]));
+  });
+  d.t = t; KEYS.forEach((k, j) => d[k] = cols[j]); return d;
+}
+function showMsg(t) { destroy(); $("msg").textContent = t; $("msg").style.display = "block"; }
 
-            .chart-card h2 {
-                font-size: 1.1rem;
-                color: #444;
-                margin-bottom: 15px;
-            }
+// ---- rendering
+const fmt = (v, d) => v == null ? "–" : v.toFixed(d);
+const bandOf = (m, v) => (METRICS[m].bands.find(b => v >= b[0] && v < b[1]) || [])[2];
+const fmtStep = s => s < 60 ? s + " s" : s < 3600 ? s / 60 + " min" : s < 86400 ? s / 3600 + " h" : s / 86400 + " d";
 
-            .chart-card .chart {
-                position: relative;
-            }
+function destroy() { Object.values(plots).forEach(p => p.destroy()); plots = {}; main.querySelectorAll(".panel").forEach(e => e.remove()); }
 
-            /* Mobile responsiveness */
-            @media (max-width: 768px) {
-                .chart-container {
-                    grid-template-columns: 1fr;
-                }
+function bandsPlugin(m) {
+  return { hooks: { drawClear: [u => {
+    const { ctx } = u, { left, top, width, height } = u.bbox, y = u.scales.y;
+    ctx.save(); ctx.beginPath(); ctx.rect(left, top, width, height); ctx.clip();
+    for (const [lo, hi, c] of METRICS[m].bands) {
+      const y1 = u.valToPos(Math.min(hi, y.max), "y", true), y0 = u.valToPos(Math.max(lo, y.min), "y", true);
+      if (y0 <= y1) continue;
+      ctx.globalAlpha = .1; ctx.fillStyle = css("--" + c); ctx.fillRect(left, y1, width, y0 - y1);
+    }
+    ctx.restore();
+  }]}};
+}
 
-                canvas {
-                    height: 200px !important;
-                }
-            }
+function render() {
+  if (!data) return;
+  destroy();
+  const empty = !data.t.length;
+  $("msg").style.display = empty ? "block" : "none"; $("msg").textContent = "No data in this range";
+  if (empty) return;
+  const keys = shown();
+  const frag = document.createDocumentFragment();
 
-            .header {
-                text-align: center;
-                padding-top: 20px;
-            }
+  for (const m of keys) {  // stat panels
+    const v = data[m].filter(x => x != null), last = v[v.length - 1];
+    const el = document.createElement("div"); el.className = "panel stat"; el.style.setProperty("--c", `var(--c-${m})`);
+    const b = bandOf(m, last); if (b) el.style.setProperty("--vc", `var(--${b})`);
+    el.innerHTML = `<div class="name">${METRICS[m].name}</div><div class="val">${fmt(last, METRICS[m].dec)}<small style="font-size:14px;color:var(--muted)"> ${METRICS[m].unit}</small></div>
+      <div class="sub">min ${fmt(Math.min(...v), METRICS[m].dec)} · avg ${fmt(v.reduce((a, b) => a + b, 0) / v.length, METRICS[m].dec)} · max ${fmt(Math.max(...v), METRICS[m].dec)}</div>`;
+    frag.append(el);
+  }
+  const holders = {};
+  keys.forEach((m, i) => {
+    const el = document.createElement("div");
+    el.className = "panel chartp" + (keys.length % 2 && i === keys.length - 1 ? " wide" : "");
+    el.innerHTML = `<h2>${METRICS[m].name} <span>${METRICS[m].unit} · ${st.agg} / ${fmtStep(data.step)}</span></h2><div class="plot"></div>`;
+    holders[m] = el.lastChild; frag.append(el);
+  });
+  main.append(frag);
 
-            .controls {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                gap: 10px;
-                margin-top: 10px;
-            }
+  const sync = uPlot.sync("air"), text = css("--muted"), grid = css("--grid");
+  for (const m of keys) {
+    const col = css("--c-" + m), w = holders[m].clientWidth - 8;
+    plots[m] = new uPlot({
+      width: w, height: 220, plugins: [bandsPlugin(m)],
+      tzDate: ts => uPlot.tzDate(new Date(ts * 1000), "Etc/UTC"),  // server sends wall-clock-as-UTC
+      cursor: { sync: { key: sync.key }, drag: { x: true, y: false } },
+      legend: { live: true },
+      scales: { x: { range: () => [data.start, data.end] } },
+      axes: [{ stroke:text, grid:{ stroke:grid, width:1 }, ticks:{ stroke:grid } },
+             { stroke:text, grid:{ stroke:grid, width:1 }, ticks:{ stroke:grid }, size:50 }],
+      series: [{}, { label: METRICS[m].name, stroke: col, width: 1.5, spanGaps: false,
+        fill: col + "22", points: { show: data.t.length < 80 },
+        value: (u, v) => v == null ? "–" : v.toFixed(METRICS[m].dec) + " " + METRICS[m].unit }],
+      hooks: { setSelect: [u => {
+        if (u.select.width < 10) return;
+        const a = Math.round(u.posToVal(u.select.left, "x")), b = Math.round(u.posToVal(u.select.left + u.select.width, "x"));
+        u.setSelect({ width: 0, height: 0 }, false); zoom = [a, b]; load();
+      }] },
+    }, [data.t, data[m]], holders[m]);
+    plots[m].root.addEventListener("dblclick", () => { if (zoom) { zoom = null; load(); } });
+  }
+}
+const main = $("main");
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 200); });
 
-            .controls label {
-                font-size: 1rem;
-                color: #555;
-            }
-
-            .controls select {
-                padding: 6px 14px;
-                border-radius: 6px;
-                border: 1px solid #ccc;
-                font-size: 1rem;
-                background: white;
-                color: #333;
-                cursor: pointer;
-            }
-        </style>
-    </head>
-
-    <body>
-        <div class="header">
-            <h1 id="timeTitle">Logged Values in Last 1 Day</h1>
-            <div class="controls">
-                <label for="timespan">Time Range:</label>
-                <select id="timespan">
-                    <option value="8">8 Hours</option>
-                    <option value="24" selected>1 Day</option>
-                    <option value="48">2 Days</option>
-                    <option value="72">3 Days</option>
-                    <option value="96">4 Days</option>
-                    <option value="120">5 Days</option>
-                    <option value="144">6 Days</option>
-                    <option value="168">1 Week</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="chart-container">
-            <div class="chart-card">
-                <h2>PM02</h2>
-                <div class="chart">
-                    <canvas id="pm02Chart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card">
-                <h2>RCO2</h2>
-                <div class="chart">
-                    <canvas id="rco2Chart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card">
-                <h2>ATMP</h2>
-                <div class="chart">
-                    <canvas id="atmpChart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card">
-                <h2>RHUM</h2>
-                <div class="chart">
-                    <canvas id="rhumChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            const TIMESPAN_LABELS = {
-                8: '8 Hours', 24: '1 Day', 48: '2 Days',
-                72: '3 Days', 96: '4 Days', 120: '5 Days',
-                144: '6 Days', 168: '1 Week'
-            };
-
-            const crosshairPlugin = {
-                id: 'crosshair',
-                afterDraw(chart) {
-                    const active = chart.tooltip?.getActiveElements?.();
-                    if (!active?.length) return;
-                    const ctx = chart.ctx;
-                    const x = active[0].element.x;
-                    const { top, bottom } = chart.scales.y;
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.moveTo(x, top);
-                    ctx.lineTo(x, bottom);
-                    ctx.lineWidth = 1;
-                    ctx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
-                    ctx.setLineDash([4, 3]);
-                    ctx.stroke();
-                    ctx.restore();
-                }
-            };
-
-            let chartInstances = {};
-
-            function createChart(ctx, timestamps, values, label, annotations) {
-                return new Chart(ctx, {
-                    type: 'line',
-                    plugins: [crosshairPlugin],
-                    data: {
-                        labels: timestamps,
-                        datasets: [{
-                            label: label,
-                            data: values,
-                            borderColor: '#6c757d',
-                            fill: false,
-                            borderWidth: 2,
-                            lineTension: 0.1,
-                            pointBackgroundColor: '#6c757d',
-                            pointBorderColor: '#495057',
-                            pointRadius: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false
-                        },
-                        scales: {
-                            x: { ticks: { maxRotation: 90, minRotation: 45 } },
-                            y: { beginAtZero: false }
-                        },
-                        plugins: {
-                            annotation: { annotations: annotations }
-                        }
-                    }
-                });
-            }
-
-            function loadData(hours) {
-                fetch(`/data?hours=${hours}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message) return;
-
-                    document.getElementById('timeTitle').textContent =
-                        `Logged Values in Last ${TIMESPAN_LABELS[hours]}`;
-
-                    Object.values(chartInstances).forEach(c => c.destroy());
-                    chartInstances = {};
-
-                    const pm02Annotations = [
-                        { type: 'box', yMin: 0, yMax: 25, backgroundColor: 'rgba(0, 255, 0, 0.2)', borderColor: 'green', borderWidth: 1, label: { content: 'Good (0-25)', enabled: true, position: 'center' } },
-                        { type: 'box', yMin: 25, yMax: 50, backgroundColor: 'rgba(255, 255, 0, 0.2)', borderColor: 'yellow', borderWidth: 1, label: { content: 'Fair (25-50)', enabled: true, position: 'center' } },
-                        { type: 'box', yMin: 50, yMax: 100, backgroundColor: 'rgba(255, 165, 0, 0.2)', borderColor: 'orange', borderWidth: 1, label: { content: 'Poor (50-100)', enabled: true, position: 'center' } },
-                        { type: 'box', yMin: 100, yMax: Math.max(...data.pm02, 140), backgroundColor: 'rgba(255, 0, 0, 0.2)', borderColor: 'red', borderWidth: 1, label: { content: 'Bad (>100)', enabled: true, position: 'center' } }
-                    ];
-
-                    const rco2Annotations = [
-                        { type: 'box', yMin: Math.min(...data.rco2, 400), yMax: 1000, backgroundColor: 'rgba(0, 255, 0, 0.2)', borderColor: 'green', borderWidth: 1, label: { content: 'Good (200-1000)', enabled: true, position: 'center' } },
-                        { type: 'box', yMin: 1000, yMax: 2000, backgroundColor: 'rgba(255, 255, 0, 0.2)', borderColor: 'yellow', borderWidth: 1, label: { content: 'Suboptimal (1000-2000)', enabled: true, position: 'center' } },
-                        { type: 'box', yMin: 2000, yMax: Math.max(...data.rco2, 2200), backgroundColor: 'rgba(255, 0, 0, 0.2)', borderColor: 'red', borderWidth: 1, label: { content: 'Bad (>2000)', enabled: true, position: 'center' } }
-                    ];
-
-                    const rhumAnnotations = [
-                        { type: 'box', yMin: 30, yMax: 60, backgroundColor: 'rgba(0, 255, 0, 0.2)', borderColor: 'green', borderWidth: 1, label: { content: 'Good (30-60)', enabled: true, position: 'center' } }
-                    ];
-
-                    chartInstances.pm02 = createChart(document.getElementById('pm02Chart').getContext('2d'), data.timestamps, data.pm02, 'PM02', pm02Annotations);
-                    chartInstances.rco2 = createChart(document.getElementById('rco2Chart').getContext('2d'), data.timestamps, data.rco2, 'RCO2', rco2Annotations);
-                    chartInstances.atmp = createChart(document.getElementById('atmpChart').getContext('2d'), data.timestamps, data.atmp, 'ATMP', []);
-                    chartInstances.rhum = createChart(document.getElementById('rhumChart').getContext('2d'), data.timestamps, data.rhum, 'RHUM', rhumAnnotations);
-                });
-            }
-
-            document.getElementById('timespan').addEventListener('change', function() {
-                loadData(parseInt(this.value));
-            });
-
-            loadData(24);
-        </script>
-    </body>
+syncChips(); syncCustom(); schedule(); load();
+</script>
+</body>
 </html>

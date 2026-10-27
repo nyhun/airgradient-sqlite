@@ -46,6 +46,16 @@ For small-scale home deployments, using `uvicorn` to serve the application shoul
    ```bash
    pip install -r requirements.txt
 3. **Start server**
-   Run the following command to start the server:
+   Run from the `server` directory:
    ```bash
-   uvicorn app:app
+   python app.py
+   ```
+   This serves on port 8000 with request logging disabled.
+   Inserts are committed to SQLite in batches (every 5 minutes, WAL mode) to reduce SD card writes;
+   change `COMMIT_INTERVAL` in `app.py` if you want a different trade-off.
+
+### Dashboard
+Open `http://<host>:8000/`. Grafana-style panels with: time range presets (1h – 1y, today, yesterday, custom from/to),
+drag-to-zoom on any chart (double-click to reset), aggregation function (avg/min/max) and bucket size,
+metric toggles, auto-refresh, and synced crosshairs. The view state is kept in the URL hash.
+The chart library (uPlot, ~50 KB) is bundled in `server/static`, so no internet is needed.
